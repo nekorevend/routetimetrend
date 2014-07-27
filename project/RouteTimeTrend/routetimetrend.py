@@ -16,14 +16,11 @@ def index():
 
     start_time = time.time()
     output = 'Hours only: '
-    duration_str = getDuration(hours_test)
-    output += parseDuration(duration_str)
+    output += str(getDuration(hours_test))
     output += '<br/>Hours and minutes: '
-    duration_str = getDuration(hours_minutes_test)
-    output += parseDuration(duration_str)
+    output += str(getDuration(hours_minutes_test))
     output += '<br/>Minutes only: '
-    duration_str = getDuration(minutes_test)
-    output += parseDuration(duration_str)
+    output += str(getDuration(minutes_test))
     processing_time = (time.time() - start_time)
     output += '<br/>Results grabbed in: ' + str(processing_time) + ' seconds'
     return output
@@ -36,7 +33,7 @@ def getDuration(url):
     match = re.search('<span> +In current traffic: (.*?) +</span>', html_source)
     if match:
         result = match.group(1)
-    return result
+    return parseDuration(result)
 
 def parseDuration(duration_str):
     hours = 0
@@ -47,8 +44,7 @@ def parseDuration(duration_str):
     match = re.search(r'(\d+) mins', duration_str)
     if match:
         minutes = match.group(1)
-    result = datetime.timedelta(hours=int(hours), minutes=int(minutes))
-    return str(result)
+    return datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
 if __name__ == '__main__':
     app.run()
