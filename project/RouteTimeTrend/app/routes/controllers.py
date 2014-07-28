@@ -1,5 +1,5 @@
 __author__ = 'vchang'
-from flask import Blueprint, request, render_template
+from flask import Blueprint, request, render_template, redirect, url_for
 
 routes = Blueprint('routes', __name__, url_prefix='/routes')
 
@@ -9,6 +9,11 @@ import re
 import urllib
 import time
 import datetime
+
+from app.routes.models import Route
+from app.routes.forms import AddRouteForm
+
+from app import db
 
 @routes.route('/')
 def index():
@@ -26,6 +31,27 @@ def index():
     processing_time = (time.time() - start_time)
     output += '<br/>Results grabbed in: ' + str(processing_time) + ' seconds'
     return output
+
+
+@routes.route('/list')
+def route_list():
+    routes = Route.query.all()
+
+    return render_template('routes.html', routes=routes)
+
+@routes.route('/add', methods=['GET', 'POST'])
+def add_route():
+    form = AddRouteForm(request.form)
+    print form.errors
+    if form.validate_on_submit():
+        route = Route()
+        route.name = form.name.data
+        route.url = form.url.data
+        db.session.add(route)
+        db.session.commit()
+        return redirect(url_for('routes.add_route'))
+
+    return render_template('add_route.html', form=form)
 
 
 def get_duration(url):

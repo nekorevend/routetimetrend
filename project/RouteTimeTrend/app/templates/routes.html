@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>Route List</title>
+</head>
+<body>
+{% for route in routes %}
+{{ route.id }} - <a href="{{ route.url }}">{{ route.name }}</a><br/>
+{% endfor %}
+</body>
+</html>

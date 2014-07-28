@@ -1,8 +1,9 @@
+DEBUG = True
 
 import os
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-SQLALCHEMY_DATABASE_URI = 'psql:///' + os.path.join(BASE_DIR, 'app.db')
+SQLALCHEMY_DATABASE_URI = 'postgresql://routetimeuser:passw0rd@localhost/routetime'
 DATABASE_CONNECT_OPTIONS = {}
 
 CSRF_ENABLED = True

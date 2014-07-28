@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="POST" action="" accept-charset="UTF-8" role="form">
+    {{ form.hidden_tag() }}
+    {{ form.name.label }}<br/>
+    {{ form.name }}<br/>
+    {{ form.url.label }}<br/>
+    {{ form.url }}<br/>
+    <button type="submit" name="submit">Add Route</button>
+</form>
+{% endblock %}
