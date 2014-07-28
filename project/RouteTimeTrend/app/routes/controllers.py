@@ -56,14 +56,19 @@ def add_route():
 
 @routes.route('/<int:route_id>/check_now')
 def manual_route_poll(route_id):
-    route = Route.query.get_or_404(route_id)
-    route_time = RouteTime()
-    route_time.route_id = route.id
-    route_time.duration = get_duration(route.url)
-    if route_time.duration:
-        db.session.add(route_time)
-        db.session.commit()
+    save_duration(route_id)
     return redirect(url_for('routes.route_list'))
+
+def save_duration(route_id):
+    route = Route.query.get(route_id)
+    if route:
+        route_time = RouteTime()
+        route_time.route_id = route.id
+        route_time.duration = get_duration(route.url)
+        if route_time.duration:
+            print 'saving for route', route_id
+            db.session.add(route_time)
+            db.session.commit()
 
 
 def get_duration(url):
@@ -74,6 +79,10 @@ def get_duration(url):
     match = re.search('<span> +In current traffic: (.*?) +</span>', html_source)
     if match:
         result = match.group(1)
+    else:
+        match = re.search('<span>((?:(?:\d+ hours ?)|(?:\d+ mins ?))+)<\/span>', html_source)
+        if match:
+            result = match.group(1)
     return parse_duration(result)
 
 
