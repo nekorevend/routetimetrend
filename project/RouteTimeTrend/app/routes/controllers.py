@@ -10,7 +10,7 @@ import urllib
 import time
 import datetime
 
-from app.routes.models import Route
+from app.routes.models import Route, RouteTime
 from app.routes.forms import AddRouteForm
 
 from app import db
@@ -32,12 +32,12 @@ def index():
     output += '<br/>Results grabbed in: ' + str(processing_time) + ' seconds'
     return output
 
-
 @routes.route('/list')
 def route_list():
     routes = Route.query.all()
 
-    return render_template('routes.html', routes=routes)
+    return render_template('routes.html', title='Route List', routes=routes)
+
 
 @routes.route('/add', methods=['GET', 'POST'])
 def add_route():
@@ -51,7 +51,19 @@ def add_route():
         db.session.commit()
         return redirect(url_for('routes.add_route'))
 
-    return render_template('add_route.html', form=form)
+    return render_template('add_route.html', title='Add Route', form=form)
+
+
+@routes.route('/<int:route_id>/check_now')
+def manual_route_poll(route_id):
+    route = Route.query.get_or_404(route_id)
+    route_time = RouteTime()
+    route_time.route_id = route.id
+    route_time.duration = get_duration(route.url)
+    if route_time.duration:
+        db.session.add(route_time)
+        db.session.commit()
+    return redirect(url_for('routes.route_list'))
 
 
 def get_duration(url):

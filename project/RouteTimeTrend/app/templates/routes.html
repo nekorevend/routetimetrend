@@ -1,12 +1,6 @@
-<!DOCTYPE html>
-<html>
-<head lang="en">
-    <meta charset="UTF-8">
-    <title>Route List</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block content %}
 {% for route in routes %}
-{{ route.id }} - <a href="{{ route.url }}">{{ route.name }}</a><br/>
+{{ route.id }} - <a href="{{ route.url }}">{{ route.name }}</a> <a class="btn" href="{{ url_for('routes.manual_route_poll', route_id=route.id)}}">Trigger Now</a><br/>
 {% endfor %}
-</body>
-</html>
+{% endblock %}
