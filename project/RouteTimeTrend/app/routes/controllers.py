@@ -89,10 +89,10 @@ def get_duration(url):
 def parse_duration(duration_str):
     hours = 0
     minutes = 0
-    match = re.search(r'(\d+) hours', duration_str)
+    match = re.search(r'(\d+) hour', duration_str)
     if match:
         hours = match.group(1)
-    match = re.search(r'(\d+) mins', duration_str)
+    match = re.search(r'(\d+) min', duration_str)
     if match:
         minutes = match.group(1)
     return datetime.timedelta(hours=int(hours), minutes=int(minutes))
