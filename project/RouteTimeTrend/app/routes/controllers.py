@@ -83,13 +83,17 @@ def get_duration(url):
         match = re.search('<span>((?:(?:\d+ hours ?)|(?:\d+ mins ?))+)<\/span>', html_source)
         if match:
             result = match.group(1)
+        else:
+            matches = re.findall('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', html_source)
+            if matches:
+                result = matches[1]  # We want the second instance; the first instance is the generic non-traffic time while the second one appears to be the time with current traffic
     return parse_duration(result)
 
 
 def parse_duration(duration_str):
     hours = 0
     minutes = 0
-    match = re.search(r'(\d+) hour', duration_str)
+    match = re.search(r'(\d+) h', duration_str)
     if match:
         hours = match.group(1)
     match = re.search(r'(\d+) min', duration_str)
