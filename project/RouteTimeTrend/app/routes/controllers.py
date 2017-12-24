@@ -9,6 +9,7 @@ import re
 import urllib
 import time
 import datetime
+import subprocess
 
 from app.routes.models import Route, RouteTime
 from app.routes.forms import AddRouteForm
@@ -69,13 +70,13 @@ def save_duration(route_id):
             print 'saving for route', route_id
             db.session.add(route_time)
             db.session.commit()
+        else:
+            print 'failed to get duration for route', route_id
 
 
 def get_duration(url):
     result = ''
-    sock = urllib.urlopen(url)
-    html_source = sock.read()
-    sock.close()
+    html_source = subprocess.check_output('google-chrome --headless --disable-gpu --dump-dom ' + url, shell=True)
     match = re.search('<span> +In current traffic: (.*?) +</span>', html_source)
     if match:
         result = match.group(1)
