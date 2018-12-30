@@ -1,11 +1,12 @@
 __author__ = 'vchang'
 
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
+from config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
 db = SQLAlchemy(app)
-app.config.from_object('config')
 
 from app.routes.controllers import routes
 app.register_blueprint(routes)
