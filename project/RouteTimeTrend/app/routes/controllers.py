@@ -9,7 +9,8 @@ import re
 import urllib
 import time
 import datetime
-import subprocess
+from subprocess32 import check_output, TimeoutExpired
+from bs4 import BeautifulSoup
 
 from app.routes.models import Route, RouteTime
 from app.routes.forms import AddRouteForm
@@ -65,31 +66,36 @@ def save_duration(route_id):
     if route:
         route_time = RouteTime()
         route_time.route_id = route.id
-        route_time.duration = get_duration(route.url)
+        file = open('/out/route'+str(route.id)+'.html', 'w+')
+        route_time.duration = get_duration(route.url, file)
+        file.close()
         if route_time.duration:
-            print 'saving for route', route_id
+            print 'Saving for route', route_id, ":", route.name
             db.session.add(route_time)
             db.session.commit()
         else:
-            print 'failed to get duration for route', route_id
+            print 'Failed to get duration for route', route_id
 
 
-def get_duration(url):
+def get_duration(url, file):
     result = ''
-    html_source = subprocess.check_output('google-chrome --headless --disable-gpu --dump-dom ' + url, shell=True)
-    match = re.search('<span> +In current traffic: (.*?) +</span>', html_source)
-    if match:
-        result = match.group(1)
-    else:
-        match = re.search('<span>((?:(?:\d+ hours ?)|(?:\d+ mins ?))+)<\/span>', html_source)
-        if match:
-            result = match.group(1)
-        else:
-            matches = re.findall('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', html_source)
-            if matches:
-                result = matches[1]  # We want the second instance; the first instance is the generic non-traffic time while the second one appears to be the time with current traffic
-    return parse_duration(result)
+    html_source = ''
+    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage ' + url, shell=True)
 
+    file.write(html_source)
+
+    soup = BeautifulSoup(html_source, features='html.parser')
+    results = soup.findAll(text=re.compile('typically'))
+
+    if len(results) == 1:
+        result = results[0]
+        matches = None
+        while result.parent and not matches:
+            result = result.parent
+            matches = re.search('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', str(result))
+            if matches:
+                return parse_duration(matches.group(1))
+    raise Exception('No time match found!')
 
 def parse_duration(duration_str):
     hours = 0
