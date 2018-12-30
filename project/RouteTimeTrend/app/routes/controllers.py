@@ -9,7 +9,7 @@ import re
 import urllib
 import time
 import datetime
-from subprocess32 import check_output, TimeoutExpired
+from subprocess import check_output, TimeoutExpired
 from bs4 import BeautifulSoup
 
 from app.routes.models import Route, RouteTime
@@ -44,7 +44,7 @@ def route_list():
 @routes.route('/add', methods=['GET', 'POST'])
 def add_route():
     form = AddRouteForm(request.form)
-    print form.errors
+    print(form.errors)
     if form.validate_on_submit():
         route = Route()
         route.name = form.name.data
@@ -70,17 +70,17 @@ def save_duration(route_id):
         route_time.duration = get_duration(route.url, file)
         file.close()
         if route_time.duration:
-            print 'Saving for route', route_id, ":", route.name
+            print('Saving for route', route_id, ":", route.name)
             db.session.add(route_time)
             db.session.commit()
         else:
-            print 'Failed to get duration for route', route_id
+            print('Failed to get duration for route', route_id)
 
 
 def get_duration(url, file):
     result = ''
     html_source = ''
-    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage ' + url, shell=True)
+    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage ' + url, encoding='UTF-8', shell=True)
 
     file.write(html_source)
 

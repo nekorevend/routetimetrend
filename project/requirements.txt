@@ -17,6 +17,5 @@ itsdangerous==1.1.0
 kombu==4.2.2
 psycopg2==2.7.6.1
 pytz==2018.7
-wsgiref==0.1.2
 subprocess32==3.5.3
 beautifulsoup4==4.6.3
