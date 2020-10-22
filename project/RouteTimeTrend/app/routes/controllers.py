@@ -11,6 +11,7 @@ import time
 import datetime
 from subprocess import check_output, TimeoutExpired
 from bs4 import BeautifulSoup
+from retry import retry
 
 from app.routes.models import Route, RouteTime
 from app.routes.forms import AddRouteForm
@@ -76,11 +77,12 @@ def save_duration(route_id):
         else:
             print('Failed to get duration for route', route_id)
 
-
+@retry(tries=2)
 def get_duration(url, file):
+    print('Attempting to get duration for', url)
     result = ''
     html_source = ''
-    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage ' + url, encoding='UTF-8', shell=True)
+    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage --virtual-time-budget=20000 ' + url, encoding='UTF-8', shell=True)
 
     file.write(html_source)
 
