@@ -12,7 +12,7 @@ amqp==5.0.1
 anyjson==0.3.3
 argparse==1.4.0
 billiard==3.6.3.0
-celery==5.0.1
+celery==5.2.2
 itsdangerous==1.1.0
 kombu==5.0.2
 psycopg2==2.8.6
