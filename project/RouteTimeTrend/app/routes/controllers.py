@@ -87,16 +87,14 @@ def get_duration(url, file):
     file.write(html_source)
 
     soup = BeautifulSoup(html_source, features='html.parser')
-    results = soup.findAll(text=re.compile('typically'))
+    result = soup.find('img', src=re.compile('directions_car'), attrs={'aria-label': '  Driving  '})
 
-    if len(results) == 1:
-        result = results[0]
-        matches = None
-        while result.parent and not matches:
-            result = result.parent
-            matches = re.search('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', str(result))
-            if matches:
-                return parse_duration(matches.group(1))
+    matches = None
+    while result.parent and not matches:
+        result = result.parent
+        matches = re.search('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', str(result))
+        if matches:
+            return parse_duration(matches.group(1))
     raise Exception('No time match found!')
 
 def parse_duration(duration_str):
