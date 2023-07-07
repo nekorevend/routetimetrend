@@ -87,7 +87,7 @@ def get_duration(url, file):
     file.write(html_source)
 
     soup = BeautifulSoup(html_source, features='html.parser')
-    result = soup.find('img', src=re.compile('directions_car'), attrs={'aria-label': '  Driving  '})
+    result = soup.find('img', src=re.compile('directions_car'), attrs={'aria-label': 'Driving'})
 
     matches = None
     while result.parent and not matches:
