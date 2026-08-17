@@ -11,4 +11,5 @@ db = SQLAlchemy(app)
 from app.routes.controllers import routes
 app.register_blueprint(routes)
 
-db.create_all()
+with app.app_context():
+    db.create_all()

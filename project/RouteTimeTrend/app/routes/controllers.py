@@ -5,8 +5,8 @@ routes = Blueprint('routes', __name__, url_prefix='/routes')
 
 # from run import app
 
+import os
 import re
-import urllib
 import time
 import datetime
 from subprocess import check_output, TimeoutExpired
@@ -37,7 +37,7 @@ def index():
 
 @routes.route('/list')
 def route_list():
-    routes = Route.query.all()
+    routes = db.session.scalars(db.select(Route)).all()
 
     return render_template('routes.html', title='Route List', routes=routes)
 
@@ -63,7 +63,7 @@ def manual_route_poll(route_id):
     return redirect(url_for('routes.route_list'))
 
 def save_duration(route_id):
-    route = Route.query.get(route_id)
+    route = db.session.get(Route, route_id)
     if route:
         route_time = RouteTime()
         route_time.route_id = route.id
@@ -77,33 +77,76 @@ def save_duration(route_id):
         else:
             print('Failed to get duration for route', route_id)
 
-@retry(tries=2)
-def get_duration(url, file):
-    print('Attempting to get duration for', url)
-    result = ''
-    html_source = ''
-    html_source = check_output('chromium-browser --headless --disable-gpu --dump-dom --no-sandbox --disable-software-rasterizer --disable-dev-shm-usage --virtual-time-budget=20000 ' + url, encoding='UTF-8', shell=True)
+SELECT_TRIP_RE = re.compile(r'selectTrip')
+DURATION_RE = re.compile(r'((?:(?:\d+\s*h(?:our[s]?|r[s]?)?\.?\s*)|(?:\d+\s*min[s]?\.?\s*))+)', re.IGNORECASE)
 
-    file.write(html_source)
+
+def trip_index(tag):
+    try:
+        return int(tag['data-trip-index'])
+    except (KeyError, TypeError, ValueError):
+        return 999
+
+
+def find_trip_containers(soup):
+    """Yield (tier, tag) candidates for the trip container, best guess first."""
+    by_index = lambda tags: sorted(tags, key=trip_index)
+
+    tiers = [
+        ('data-trip-index+selectTrip', by_index(soup.find_all(attrs={'data-trip-index': True, 'jsaction': SELECT_TRIP_RE}))),
+        ('data-trip-index', by_index(soup.find_all(attrs={'data-trip-index': True}))),
+        ('selectTrip', soup.find_all(attrs={'jsaction': SELECT_TRIP_RE})),
+        ('section-directions-trip-0', soup.find_all('div', id='section-directions-trip-0')),
+    ]
+
+    seen = set()
+    for tier, tags in tiers:
+        for tag in tags:
+            if id(tag) not in seen:
+                seen.add(id(tag))
+                yield tier, tag
+
+CHROMIUM_BIN = os.environ.get('CHROMIUM_BIN', 'chromium-headless-shell')
+
+CHROMIUM_ARGS = [
+    '--headless',
+    '--disable-gpu',
+    '--dump-dom',
+    '--no-sandbox',
+    '--disable-software-rasterizer',
+    '--disable-dev-shm-usage',
+    '--virtual-time-budget=20000',
+]
+
+
+@retry(tries=2)
+def get_duration(url, file=None):
+    print('Attempting to get duration for', url)
+    html_source = check_output([CHROMIUM_BIN] + CHROMIUM_ARGS + [url], encoding='UTF-8')
+
+    if file:
+        file.write(html_source)
 
     soup = BeautifulSoup(html_source, features='html.parser')
-    result = soup.find('img', src=re.compile('directions_car'), attrs={'aria-label': 'Driving'})
 
-    matches = None
-    while result.parent and not matches:
-        result = result.parent
-        matches = re.search('((?:(?:\d+ h(?:our[s]?)? ?)|(?:\d+ min[s]? ?))+)', str(result))
-        if matches:
-            return parse_duration(matches.group(1))
+    for tier, container in find_trip_containers(soup):
+        for child in container.descendants:
+            value = child.string
+            if value and 'without traffic' not in value:
+                matches = DURATION_RE.search(value)
+                if matches:
+                    print('Matched duration via', tier)
+                    return parse_duration(matches.group(1))
+
     raise Exception('No time match found!')
 
 def parse_duration(duration_str):
     hours = 0
     minutes = 0
-    match = re.search(r'(\d+) h', duration_str)
+    match = re.search(r'(\d+)\s*h', duration_str)
     if match:
         hours = match.group(1)
-    match = re.search(r'(\d+) min', duration_str)
+    match = re.search(r'(\d+)\s*min', duration_str)
     if match:
         minutes = match.group(1)
     return datetime.timedelta(hours=int(hours), minutes=int(minutes))
