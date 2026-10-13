@@ -5,7 +5,7 @@ Jinja2==3.1.6
 MarkupSafe==3.0.3
 SQLAlchemy==2.0.52
 WTForms==3.2.2
-Werkzeug==3.1.8
+Werkzeug==3.1.9
 amqp==5.3.1
 billiard==4.2.4
 celery==5.6.3
